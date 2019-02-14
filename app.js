@@ -16,7 +16,6 @@ var fs = require('fs')
 var winston = require('winston')
 var nconf = require('nconf')
 var pkg = require('./package.json')
-var ws = require('./src/webserver')
 // `var memory = require('./src/memory');
 
 global.forks = []
@@ -56,18 +55,6 @@ winston.err = function (err) {
   winston.error(err.stack)
 }
 
-process.on('message', function (msg) {
-  if (msg === 'shutdown') {
-    winston.debug('Closing all connections...')
-
-    if (ws.server) {
-      ws.server.close()
-    }
-
-    throw new Error('Server has shutdown.')
-  }
-})
-
 if (!process.env.FORK) {
   winston.info('    .                              .o8                     oooo')
   winston.info('  .o8                             "888                     `888')
@@ -93,6 +80,19 @@ if (nconf.get('config')) {
 
 configExists = fs.existsSync(configFile)
 
+function loadConfig () {
+  nconf.file({
+    file: configFile
+  })
+
+  nconf.defaults({
+    base_dir: __dirname
+  })
+}
+
+loadConfig()
+// var ws = require('./src/webserver')
+
 if (process.env.HEROKU) {
   // Build Config for Heroku
   var configHeroku = {
@@ -113,7 +113,7 @@ if (process.env.HEROKU) {
 }
 
 if (nconf.get('install') || (!configExists && !process.env.HEROKU)) {
-  ws.installServer(function () {
+  require('./src/webserver').installServer(function () {
     return winston.info('Trudesk Install Server Running...')
   })
 }
@@ -122,19 +122,7 @@ if (!nconf.get('setup') && !nconf.get('install') && !nconf.get('upgrade') && !nc
   start()
 }
 
-function loadConfig () {
-  nconf.file({
-    file: configFile
-  })
-
-  nconf.defaults({
-    base_dir: __dirname
-  })
-}
-
 function start () {
-  loadConfig()
-
   var _db = require('./src/database')
 
   _db.init(function (err, db) {
@@ -155,11 +143,24 @@ function dbCallback (err, db) {
     return start()
   }
 
+  var ws = require('./src/webserver')
   ws.init(db, function (err) {
     if (err) {
       winston.error(err)
       return
     }
+
+    process.on('message', function (msg) {
+      if (msg === 'shutdown') {
+        winston.debug('Closing all connections...')
+
+        if (ws.server) {
+          ws.server.close()
+        }
+
+        throw new Error('Server has shutdown.')
+      }
+    })
 
     async.series(
       [

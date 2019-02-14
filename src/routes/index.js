@@ -10,16 +10,13 @@
  **/
 
 var express = require('express')
-
 var router = express.Router()
-
 var controllers = require('../controllers/index.js')
-
 var path = require('path')
-
 var winston = require('winston')
-
 var packagejson = require('../../package.json')
+
+var apiV2Routes = require('../controllers/api/v2/routes')
 
 function mainRoutes (router, middleware, controllers) {
   router.get('/', middleware.redirectToDashboardIfLoggedIn, controllers.main.index)
@@ -316,6 +313,9 @@ function mainRoutes (router, middleware, controllers) {
 
   // API
   router.get('/api', controllers.api.index)
+  router.get('/api/version', function (req, res) {
+    return res.json({ version: packagejson.version })
+  })
   router.get('/api/v1/version', function (req, res) {
     return res.json({ version: packagejson.version })
   })
@@ -323,136 +323,152 @@ function mainRoutes (router, middleware, controllers) {
   router.get('/api/v1/login', middleware.api, controllers.api.getLoggedInUser)
   router.get('/api/v1/logout', middleware.api, controllers.api.logout)
 
-  router.get('/api/v1/tickets', middleware.api, controllers.api.tickets.get)
-  router.get('/api/v1/tickets/search', middleware.api, controllers.api.tickets.search)
-  router.post('/api/v1/tickets/create', middleware.api, controllers.api.tickets.create)
-  router.get('/api/v1/tickets/type/:id', middleware.api, controllers.api.tickets.getType)
-  router.post('/api/v1/tickets/type/:id/removepriority', middleware.api, controllers.api.tickets.typeRemovePriority)
-  router.post('/api/v1/tickets/type/:id/addpriority', middleware.api, controllers.api.tickets.typeAddPriority)
-  router.get('/api/v1/tickets/types', middleware.api, controllers.api.tickets.getTypes)
-  router.post('/api/v1/tickets/types/create', middleware.api, controllers.api.tickets.createType)
-  router.put('/api/v1/tickets/types/:id', middleware.api, controllers.api.tickets.updateType)
-  router.delete('/api/v1/tickets/types/:id', middleware.api, controllers.api.tickets.deleteType)
-  router.post('/api/v1/tickets/priority/create', middleware.api, controllers.api.tickets.createPriority)
-  router.post('/api/v1/tickets/priority/:id/delete', middleware.api, controllers.api.tickets.deletePriority)
-  router.get('/api/v1/tickets/priorities', middleware.api, controllers.api.tickets.getPriorities)
-  router.put('/api/v1/tickets/priority/:id', middleware.api, controllers.api.tickets.updatePriority)
+  // API v2 Routes
+  apiV2Routes(middleware, router, controllers)
 
-  router.get('/api/v1/tickets/overdue', middleware.api, controllers.api.tickets.getOverdue)
-  router.post('/api/v1/tickets/addcomment', middleware.api, controllers.api.tickets.postComment)
-  router.post('/api/v1/tickets/addnote', middleware.api, controllers.api.tickets.postInternalNote)
-  router.get('/api/v1/tickets/tags', middleware.api, controllers.api.tickets.getTags)
-  router.get('/api/v1/tickets/count/tags', middleware.api, controllers.api.tickets.getTagCount)
-  router.get('/api/v1/tickets/count/tags/:timespan', middleware.api, controllers.api.tickets.getTagCount)
-  router.get('/api/v1/tickets/count/days', middleware.api, controllers.api.tickets.getTicketStats)
-  router.get('/api/v1/tickets/count/days/:timespan', middleware.api, controllers.api.tickets.getTicketStats)
-  router.get('/api/v1/tickets/count/topgroups', middleware.api, controllers.api.tickets.getTopTicketGroups)
-  router.get('/api/v1/tickets/count/topgroups/:top', middleware.api, controllers.api.tickets.getTopTicketGroups)
+  router.get('/api/v1/tickets', middleware.api, controllers.api.v1.tickets.get)
+  router.get('/api/v1/tickets/search', middleware.api, controllers.api.v1.tickets.search)
+  router.post('/api/v1/tickets/create', middleware.api, controllers.api.v1.tickets.create)
+  router.get('/api/v1/tickets/type/:id', middleware.api, controllers.api.v1.tickets.getType)
+  router.post('/api/v1/tickets/type/:id/removepriority', middleware.api, controllers.api.v1.tickets.typeRemovePriority)
+  router.post('/api/v1/tickets/type/:id/addpriority', middleware.api, controllers.api.v1.tickets.typeAddPriority)
+  router.get('/api/v1/tickets/types', middleware.api, controllers.api.v1.tickets.getTypes)
+  router.post('/api/v1/tickets/types/create', middleware.api, controllers.api.v1.tickets.createType)
+  router.put('/api/v1/tickets/types/:id', middleware.api, controllers.api.v1.tickets.updateType)
+  router.delete('/api/v1/tickets/types/:id', middleware.api, controllers.api.v1.tickets.deleteType)
+  router.post('/api/v1/tickets/priority/create', middleware.api, controllers.api.v1.tickets.createPriority)
+  router.post('/api/v1/tickets/priority/:id/delete', middleware.api, controllers.api.v1.tickets.deletePriority)
+  router.get('/api/v1/tickets/priorities', middleware.api, controllers.api.v1.tickets.getPriorities)
+  router.put('/api/v1/tickets/priority/:id', middleware.api, controllers.api.v1.tickets.updatePriority)
+
+  router.get('/api/v1/tickets/overdue', middleware.api, controllers.api.v1.tickets.getOverdue)
+  router.post('/api/v1/tickets/addcomment', middleware.api, controllers.api.v1.tickets.postComment)
+  router.post('/api/v1/tickets/addnote', middleware.api, controllers.api.v1.tickets.postInternalNote)
+  router.get('/api/v1/tickets/tags', middleware.api, controllers.api.v1.tickets.getTags)
+  router.get('/api/v1/tickets/count/tags', middleware.api, controllers.api.v1.tickets.getTagCount)
+  router.get('/api/v1/tickets/count/tags/:timespan', middleware.api, controllers.api.v1.tickets.getTagCount)
+  router.get('/api/v1/tickets/count/days', middleware.api, controllers.api.v1.tickets.getTicketStats)
+  router.get('/api/v1/tickets/count/days/:timespan', middleware.api, controllers.api.v1.tickets.getTicketStats)
+  router.get('/api/v1/tickets/count/topgroups', middleware.api, controllers.api.v1.tickets.getTopTicketGroups)
+  router.get('/api/v1/tickets/count/topgroups/:top', middleware.api, controllers.api.v1.tickets.getTopTicketGroups)
   router.get(
     '/api/v1/tickets/count/topgroups/:timespan/:top',
     middleware.api,
-    controllers.api.tickets.getTopTicketGroups
+    controllers.api.v1.tickets.getTopTicketGroups
   )
-  router.get('/api/v1/tickets/stats', middleware.api, controllers.api.tickets.getTicketStats)
-  router.get('/api/v1/tickets/stats/group/:group', middleware.api, controllers.api.tickets.getTicketStatsForGroup)
-  router.get('/api/v1/tickets/stats/user/:user', middleware.api, controllers.api.tickets.getTicketStatsForUser)
-  router.get('/api/v1/tickets/stats/:timespan', middleware.api, controllers.api.tickets.getTicketStats)
-  router.get('/api/v1/tickets/deleted', middleware.api, middleware.isAdmin, controllers.api.tickets.getDeletedTickets)
+  router.get('/api/v1/tickets/stats', middleware.api, controllers.api.v1.tickets.getTicketStats)
+  router.get('/api/v1/tickets/stats/group/:group', middleware.api, controllers.api.v1.tickets.getTicketStatsForGroup)
+  router.get('/api/v1/tickets/stats/user/:user', middleware.api, controllers.api.v1.tickets.getTicketStatsForUser)
+  router.get('/api/v1/tickets/stats/:timespan', middleware.api, controllers.api.v1.tickets.getTicketStats)
+  router.get(
+    '/api/v1/tickets/deleted',
+    middleware.api,
+    middleware.isAdmin,
+    controllers.api.v1.tickets.getDeletedTickets
+  )
   router.post(
     '/api/v1/tickets/deleted/restore',
     middleware.api,
     middleware.isAdmin,
-    controllers.api.tickets.restoreDeleted
+    controllers.api.v1.tickets.restoreDeleted
   )
-  router.get('/api/v1/tickets/:uid', middleware.api, controllers.api.tickets.single)
-  router.put('/api/v1/tickets/:id', middleware.api, controllers.api.tickets.update)
-  router.delete('/api/v1/tickets/:id', middleware.api, controllers.api.tickets.delete)
-  router.put('/api/v1/tickets/:id/subscribe', middleware.api, controllers.api.tickets.subscribe)
+  router.get('/api/v1/tickets/:uid', middleware.api, controllers.api.v1.tickets.single)
+  router.put('/api/v1/tickets/:id', middleware.api, controllers.api.v1.tickets.update)
+  router.delete('/api/v1/tickets/:id', middleware.api, controllers.api.v1.tickets.delete)
+  router.put('/api/v1/tickets/:id/subscribe', middleware.api, controllers.api.v1.tickets.subscribe)
   router.delete(
     '/api/v1/tickets/:tid/attachments/remove/:aid',
     middleware.api,
-    controllers.api.tickets.removeAttachment
+    controllers.api.v1.tickets.removeAttachment
   )
 
-  router.post('/api/v1/tags/create', middleware.api, controllers.api.tags.createTag)
-  router.get('/api/v1/tags/limit', middleware.api, controllers.api.tags.getTagsWithLimit)
-  router.put('/api/v1/tags/:id', middleware.api, controllers.api.tags.updateTag)
-  router.delete('/api/v1/tags/:id', middleware.api, controllers.api.tags.deleteTag)
+  router.post('/api/v1/tags/create', middleware.api, controllers.api.v1.tags.createTag)
+  router.get('/api/v1/tags/limit', middleware.api, controllers.api.v1.tags.getTagsWithLimit)
+  router.put('/api/v1/tags/:id', middleware.api, controllers.api.v1.tags.updateTag)
+  router.delete('/api/v1/tags/:id', middleware.api, controllers.api.v1.tags.deleteTag)
 
-  router.get('/api/v1/groups', middleware.api, controllers.api.groups.get)
-  router.get('/api/v1/groups/all', middleware.api, controllers.api.groups.getAll)
-  router.post('/api/v1/groups/create', middleware.api, controllers.api.groups.create)
-  router.get('/api/v1/groups/:id', middleware.api, controllers.api.groups.getSingleGroup)
-  router.delete('/api/v1/groups/:id', middleware.api, controllers.api.groups.deleteGroup)
-  router.put('/api/v1/groups/:id', middleware.api, controllers.api.groups.updateGroup)
+  router.get('/api/v1/groups', middleware.api, controllers.api.v1.groups.get)
+  router.get('/api/v1/groups/all', middleware.api, controllers.api.v1.groups.getAll)
+  router.post('/api/v1/groups/create', middleware.api, controllers.api.v1.groups.create)
+  router.get('/api/v1/groups/:id', middleware.api, controllers.api.v1.groups.getSingleGroup)
+  router.delete('/api/v1/groups/:id', middleware.api, controllers.api.v1.groups.deleteGroup)
+  router.put('/api/v1/groups/:id', middleware.api, controllers.api.v1.groups.updateGroup)
 
-  router.get('/api/v1/users', middleware.api, controllers.api.users.getWithLimit)
-  router.post('/api/v1/users/create', middleware.api, controllers.api.users.create)
-  router.get('/api/v1/users/notificationCount', middleware.api, controllers.api.users.notificationCount)
-  router.get('/api/v1/users/getassignees', middleware.api, controllers.api.users.getAssingees)
-  router.get('/api/v1/users/:username', middleware.api, controllers.api.users.single)
-  router.put('/api/v1/users/:username', middleware.api, controllers.api.users.update)
-  router.post('/api/v1/users/:username/uploadprofilepic', controllers.api.users.uploadProfilePic)
-  router.put('/api/v1/users/:username/updatepreferences', middleware.api, controllers.api.users.updatePreferences)
-  router.get('/api/v1/users/:username/enable', middleware.api, controllers.api.users.enableUser)
-  router.delete('/api/v1/users/:username', middleware.api, controllers.api.users.deleteUser)
-  router.post('/api/v1/users/:id/generateapikey', middleware.api, controllers.api.users.generateApiKey)
-  router.post('/api/v1/users/:id/removeapikey', middleware.api, controllers.api.users.removeApiKey)
-  router.post('/api/v1/users/:id/generatel2auth', middleware.api, controllers.api.users.generateL2Auth)
-  router.post('/api/v1/users/:id/removel2auth', middleware.api, controllers.api.users.removeL2Auth)
+  router.get('/api/v1/users', middleware.api, controllers.api.v1.users.getWithLimit)
+  router.post('/api/v1/users/create', middleware.api, controllers.api.v1.users.create)
+  router.get('/api/v1/users/notificationCount', middleware.api, controllers.api.v1.users.notificationCount)
+  router.get('/api/v1/users/getassignees', middleware.api, controllers.api.v1.users.getAssingees)
+  router.get('/api/v1/users/:username', middleware.api, controllers.api.v1.users.single)
+  router.put('/api/v1/users/:username', middleware.api, controllers.api.v1.users.update)
+  router.post('/api/v1/users/:username/uploadprofilepic', controllers.api.v1.users.uploadProfilePic)
+  router.put('/api/v1/users/:username/updatepreferences', middleware.api, controllers.api.v1.users.updatePreferences)
+  router.get('/api/v1/users/:username/enable', middleware.api, controllers.api.v1.users.enableUser)
+  router.delete('/api/v1/users/:username', middleware.api, controllers.api.v1.users.deleteUser)
+  router.post('/api/v1/users/:id/generateapikey', middleware.api, controllers.api.v1.users.generateApiKey)
+  router.post('/api/v1/users/:id/removeapikey', middleware.api, controllers.api.v1.users.removeApiKey)
+  router.post('/api/v1/users/:id/generatel2auth', middleware.api, controllers.api.v1.users.generateL2Auth)
+  router.post('/api/v1/users/:id/removel2auth', middleware.api, controllers.api.v1.users.removeL2Auth)
 
   router.get('/api/v1/roles', middleware.api, controllers.api.roles.get)
 
-  router.get('/api/v1/messages', middleware.api, controllers.api.messages.get)
-  router.post('/api/v1/messages/conversation/start', middleware.api, controllers.api.messages.startConversation)
-  router.get('/api/v1/messages/conversation/:id', middleware.api, controllers.api.messages.getMessagesForConversation)
-  router.delete('/api/v1/messages/conversation/:id', middleware.api, controllers.api.messages.deleteConversation)
-  router.get('/api/v1/messages/conversations', middleware.api, controllers.api.messages.getConversations)
-  router.get('/api/v1/messages/conversations/recent', middleware.api, controllers.api.messages.getRecentConversations)
-  router.post('/api/v1/messages/send', middleware.api, controllers.api.messages.send)
+  router.get('/api/v1/messages', middleware.api, controllers.api.v1.messages.get)
+  router.post('/api/v1/messages/conversation/start', middleware.api, controllers.api.v1.messages.startConversation)
+  router.get(
+    '/api/v1/messages/conversation/:id',
+    middleware.api,
+    controllers.api.v1.messages.getMessagesForConversation
+  )
+  router.delete('/api/v1/messages/conversation/:id', middleware.api, controllers.api.v1.messages.deleteConversation)
+  router.get('/api/v1/messages/conversations', middleware.api, controllers.api.v1.messages.getConversations)
+  router.get(
+    '/api/v1/messages/conversations/recent',
+    middleware.api,
+    controllers.api.v1.messages.getRecentConversations
+  )
+  router.post('/api/v1/messages/send', middleware.api, controllers.api.v1.messages.send)
 
-  router.post('/api/v1/notices/create', middleware.api, controllers.api.notices.create)
-  router.get('/api/v1/notices/clearactive', middleware.api, controllers.api.notices.clearActive)
-  router.put('/api/v1/notices/:id', middleware.api, controllers.api.notices.updateNotice)
-  router.delete('/api/v1/notices/:id', middleware.api, controllers.api.notices.deleteNotice)
+  router.post('/api/v1/notices/create', middleware.api, controllers.api.v1.notices.create)
+  router.get('/api/v1/notices/clearactive', middleware.api, controllers.api.v1.notices.clearActive)
+  router.put('/api/v1/notices/:id', middleware.api, controllers.api.v1.notices.updateNotice)
+  router.delete('/api/v1/notices/:id', middleware.api, controllers.api.v1.notices.deleteNotice)
 
   // Reports Generator
   router.post(
     '/api/v1/reports/generate/tickets_by_group',
     middleware.api,
-    controllers.api.reports.generate.ticketsByGroup
+    controllers.api.v1.reports.generate.ticketsByGroup
   )
   router.post(
     '/api/v1/reports/generate/tickets_by_status',
     middleware.api,
-    controllers.api.reports.generate.ticketsByStatus
+    controllers.api.v1.reports.generate.ticketsByStatus
   )
   router.post(
     '/api/v1/reports/generate/tickets_by_priority',
     middleware.api,
-    controllers.api.reports.generate.ticketsByPriority
+    controllers.api.v1.reports.generate.ticketsByPriority
   )
   router.post(
     '/api/v1/reports/generate/tickets_by_tags',
     middleware.api,
-    controllers.api.reports.generate.ticketsByTags
+    controllers.api.v1.reports.generate.ticketsByTags
   )
   router.post(
     '/api/v1/reports/generate/tickets_by_type',
     middleware.api,
-    controllers.api.reports.generate.ticketsByType
+    controllers.api.v1.reports.generate.ticketsByType
   )
   router.post(
     '/api/v1/reports/generate/tickets_by_user',
     middleware.api,
-    controllers.api.reports.generate.ticketsByUser
+    controllers.api.v1.reports.generate.ticketsByUser
   )
 
-  router.get('/api/v1/settings', middleware.api, controllers.api.settings.getSettings)
-  router.put('/api/v1/settings', middleware.api, controllers.api.settings.updateSetting)
-  router.post('/api/v1/settings/testmailer', middleware.api, controllers.api.settings.testMailer)
-  router.put('/api/v1/settings/mailer/template/:id', middleware.api, controllers.api.settings.updateTemplateSubject)
-  router.get('/api/v1/settings/buildsass', middleware.api, controllers.api.settings.buildsass)
+  router.get('/api/v1/settings', middleware.api, controllers.api.v1.settings.getSettings)
+  router.put('/api/v1/settings', middleware.api, controllers.api.v1.settings.updateSetting)
+  router.post('/api/v1/settings/testmailer', middleware.api, controllers.api.v1.settings.testMailer)
+  router.put('/api/v1/settings/mailer/template/:id', middleware.api, controllers.api.v1.settings.updateTemplateSubject)
+  router.get('/api/v1/settings/buildsass', middleware.api, controllers.api.v1.settings.buildsass)
 
   router.get('/api/v1/plugins/list/installed', middleware.api, function (req, res) {
     return res.json({ success: true, loadedPlugins: global.plugins })
@@ -461,32 +477,32 @@ function mainRoutes (router, middleware, controllers) {
     '/api/v1/plugins/install/:packageid',
     middleware.api,
     middleware.isAdmin,
-    controllers.api.plugins.installPlugin
+    controllers.api.v1.plugins.installPlugin
   )
   router.delete(
     '/api/v1/plugins/remove/:packageid',
     middleware.api,
     middleware.isAdmin,
-    controllers.api.plugins.removePlugin
+    controllers.api.v1.plugins.removePlugin
   )
 
   router.post(
     '/api/v1/public/users/checkemail',
     middleware.checkCaptcha,
     middleware.checkOrigin,
-    controllers.api.users.checkEmail
+    controllers.api.v1.users.checkEmail
   )
   router.post(
     '/api/v1/public/tickets/create',
     middleware.checkCaptcha,
     middleware.checkOrigin,
-    controllers.api.tickets.createPublicTicket
+    controllers.api.v1.tickets.createPublicTicket
   )
   router.post(
     '/api/v1/public/account/create',
     middleware.checkCaptcha,
     middleware.checkOrigin,
-    controllers.api.users.createPublicAccount
+    controllers.api.v1.users.createPublicAccount
   )
 
   router.get('/api/v1/backups', middleware.api, middleware.isAdmin, controllers.backuprestore.getBackups)
