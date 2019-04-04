@@ -121,7 +121,7 @@ var notifications = require('../notifications') // Load Push Events
                         .then(function (html) {
                           var subjectParsed = global.HandleBars.compile(template.subject)(context)
                           var mailOptions = {
-                            to: emails.join(),
+                            to: ticket.owner && ticket.owner.email,
                             subject: subjectParsed,
                             html: html,
                             generateTextFromHTML: true
@@ -135,9 +135,9 @@ var notifications = require('../notifications') // Load Push Events
                           winston.warn('[trudesk:events:ticket:created] - ' + err)
                           return c(err)
                         })
-                        .finally(function () {
-                          return c()
-                        })
+                      // .finally(function () {
+                      //   return c()
+                      // })
                     })
                   }
                 )
